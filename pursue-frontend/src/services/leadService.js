@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:5000/api/admin/leads";
+const API = "https://office-management-system-muks.onrender.com/api/admin/leads";
 
 const authHeader = () => ({
   headers: {

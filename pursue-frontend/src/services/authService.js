@@ -1,7 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const API = "http://localhost:5000/api";
+const API = "https://office-management-system-muks.onrender.com/api";
 
 /* ---------------- LOGIN ---------------- */
 export const login = async (email, password) => {
