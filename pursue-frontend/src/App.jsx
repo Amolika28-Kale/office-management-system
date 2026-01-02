@@ -29,6 +29,7 @@ import Invoices from "./user/pages/Invoices";
 import UserSettings from "./user/pages/UserSettings";
 import AdminPayments from "./admin/pages/AdminPayments";
 import AdminInvoices from "./admin/pages/AdminInvoices";
+import AdminSettings from "./admin/pages/AdminSettings";
 
 export default function App() {
   return (
@@ -80,6 +81,8 @@ export default function App() {
           <Route path="/admin/payments" element={<AdminPayments />} />
           {/* Invoices */}
           <Route path="/admin/invoices" element={<AdminInvoices />} />
+          {/* Settings */}
+          <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
 
         {/* ================= USER ================= */}
