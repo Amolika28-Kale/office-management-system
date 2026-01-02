@@ -125,20 +125,8 @@ export default function AdminDashboard() {
           <h2 className="text-5xl font-black mt-4">
             ₹{analytics.totalRevenue.toLocaleString()}
           </h2>
-          <div className="mt-4 flex items-center gap-2 text-emerald-400 font-bold">
-            <TrendingUp size={16} /> {growth}% Growth
-          </div>
-          <button
-            onClick={() =>
-              window.open(
-                `/api/admin/reports/dashboard?year=${year}&spaceType=${spaceType}`,
-                "_blank"
-              )
-            }
-            className="mt-8 w-full py-3 bg-white text-black rounded-xl font-black"
-          >
-            Download Report
-          </button>
+          
+         
         </div>
 
         <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border">
