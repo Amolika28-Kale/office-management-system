@@ -1,117 +1,128 @@
-import { useEffect, useState } from "react";
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, 
-  ResponsiveContainer, CartesianGrid, Cell 
+import { useEffect, useState, cloneElement } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, Cell,
+  PieChart, Pie, Legend
 } from "recharts";
-import { 
-  Users, Building2, CalendarCheck, Clock, 
-  IndianRupee, TrendingUp, ArrowUpRight, MoreVertical 
+import {
+  Users, Building2, CalendarCheck, Clock,
+  TrendingUp, MoreVertical
 } from "lucide-react";
-import { fetchDashboardStats, fetchDashboardAnalytics } from "../../services/dashboardService";
+import {
+  fetchDashboardStats,
+  fetchDashboardAnalytics
+} from "../../services/dashboardService";
+
+/* ---------------- COLORS ---------------- */
+const COLORS = ["#4f46e5", "#22c55e", "#f59e0b", "#ef4444"];
+
+/* ---------------- DEFAULT ANALYTICS (CRASH SAFE) ---------------- */
+const DEFAULT_ANALYTICS = {
+  monthlyBookings: [],
+  bookingsBySpace: [],
+  revenueBySpace: [],
+  recentBookings: [],
+  occupancy: {
+    cabins: 0,
+    desks: 0,
+    conference: 0,
+  },
+  totalRevenue: 0,
+  pendingBookings: 0,
+};
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
-  const [analytics, setAnalytics] = useState(null);
+  const [analytics, setAnalytics] = useState(DEFAULT_ANALYTICS);
 
   useEffect(() => {
-    const loadData = async () => {
+    const load = async () => {
       try {
-        const [statsRes, analyticsRes] = await Promise.all([
+        const [s, a] = await Promise.all([
           fetchDashboardStats(),
-          fetchDashboardAnalytics()
+          fetchDashboardAnalytics(),
         ]);
-        setStats(statsRes.data.data);
-        setAnalytics(analyticsRes.data);
+
+        setStats(s?.data?.data || {});
+        setAnalytics({ ...DEFAULT_ANALYTICS, ...(a?.data || {}) });
       } catch (err) {
-        console.error("Dashboard failed to load", err);
+        console.error("Dashboard load failed", err);
       }
     };
-    loadData();
+    load();
   }, []);
 
-  if (!stats || !analytics) return <DashboardSkeleton />;
+  if (!stats) return <DashboardSkeleton />;
 
-  const chartData = analytics.monthlyBookings.map((m) => ({
+  const chartData = (analytics.monthlyBookings || []).map((m) => ({
     month: new Date(2024, m._id - 1).toLocaleString("default", { month: "short" }),
-    bookings: m.count,
+    bookings: m.count || 0,
   }));
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-in fade-in duration-500">
-      
-      {/* PAGE HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-10">
+
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">System Overview</h1>
-          <p className="text-slate-500 font-medium">Real-time performance metrics for Pursue.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
+            System Overview
+          </h1>
+          <p className="text-slate-500 font-medium">
+            Pursue Co-Working Live Dashboard
+          </p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm text-sm font-bold text-slate-600">
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border text-sm font-bold">
           <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-          Live System Status
+          Live Status
         </div>
       </div>
 
-      {/* QUICK STATS GRID */}
+      {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-        <StatCard title="Total Members" value={stats.totalUsers} trend="+12%" icon={<Users />} color="indigo" />
-        <StatCard title="Spaces Managed" value={stats.activeSpaces} trend="Stable" icon={<Building2 />} color="violet" />
-        <StatCard title="Bookings" value={stats.totalBookings} trend="+18.4%" icon={<CalendarCheck />} color="emerald" />
-        <StatCard title="Pending Review" value={analytics.pendingBookings} trend="Priority" icon={<Clock />} color="amber" />
+        <StatCard title="Members" value={stats.totalUsers || 0} icon={<Users />} color="indigo" />
+        <StatCard title="Spaces" value={stats.activeSpaces || 0} icon={<Building2 />} color="violet" />
+        <StatCard title="Bookings" value={stats.totalBookings || 0} icon={<CalendarCheck />} color="emerald" />
+        <StatCard title="Pending" value={analytics.pendingBookings || 0} icon={<Clock />} color="amber" />
       </div>
 
+      {/* REVENUE + BAR */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* REVENUE INSIGHT */}
-        <div className="relative overflow-hidden bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl">
-          <div className="relative z-10 flex flex-col h-full justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-slate-400 mb-2">
-                <div className="p-2 bg-white/10 rounded-lg"><IndianRupee size={20} /></div>
-                <span className="font-bold uppercase tracking-widest text-xs">Annual Revenue</span>
-              </div>
-              <h2 className="text-5xl font-black mt-4 tracking-tighter">
-                ₹{analytics.totalRevenue.toLocaleString()}
-              </h2>
-              <div className="mt-6 flex items-center gap-2 text-emerald-400 font-bold bg-emerald-400/10 w-fit px-3 py-1 rounded-full text-sm">
-                <TrendingUp size={16} /> +24% vs last year
-              </div>
-            </div>
-            <button className="mt-12 w-full py-4 bg-white text-slate-900 rounded-2xl font-black hover:bg-slate-100 transition-colors">
-              Download Financial Report
-            </button>
+
+        {/* REVENUE */}
+        <div className="bg-slate-900 rounded-[2rem] p-6 sm:p-8 text-white">
+          <p className="uppercase text-xs text-slate-400 font-bold">
+            Annual Revenue
+          </p>
+          <h2 className="text-3xl sm:text-5xl font-black mt-4">
+            ₹{analytics.totalRevenue.toLocaleString()}
+          </h2>
+          <div className="mt-6 flex items-center gap-2 text-emerald-400 font-bold">
+            <TrendingUp size={16} /> +24%
           </div>
-          {/* Abstract background shape */}
-          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl" />
+          <button className="mt-8 w-full py-3 bg-white text-black rounded-xl font-black">
+            Download Report
+          </button>
         </div>
 
-        {/* ANALYTICS CHART */}
-        <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-extrabold text-slate-800">Booking Velocity</h3>
-            <select className="bg-slate-50 border-none text-xs font-bold text-slate-500 rounded-lg px-3 py-2 outline-none">
-              <option>Last 6 Months</option>
-              <option>Last 12 Months</option>
-            </select>
-          </div>
-
-          <div className="h-[300px] w-full">
+        {/* BAR CHART */}
+        <div className="lg:col-span-2 bg-white rounded-[2rem] p-6 sm:p-8 border">
+          <h3 className="font-extrabold mb-4 sm:mb-6">
+            Monthly Bookings
+          </h3>
+          <div className="h-[240px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="month" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }} 
-                  dy={10}
-                />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                />
-                <Bar dataKey="bookings" radius={[6, 6, 0, 0]} barSize={40}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === chartData.length - 1 ? '#4f46e5' : '#e2e8f0'} />
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="bookings" radius={[6, 6, 0, 0]}>
+                  {chartData.map((_, i) => (
+                    <Cell
+                      key={i}
+                      fill={i === chartData.length - 1 ? "#4f46e5" : "#e5e7eb"}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -120,97 +131,135 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* RECENT ACTIVITY TABLE */}
-      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="text-xl font-extrabold text-slate-800">Recent Transactions</h3>
-          <button className="text-indigo-600 font-bold text-sm hover:underline">View All</button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50">
-                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Customer</th>
-                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Space</th>
-                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {analytics.recentBookings.map((b) => (
-                <tr key={b._id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-8 py-5">
-                    <p className="font-bold text-slate-800">{b.userName}</p>
-                    <p className="text-xs text-slate-400 font-medium">Member ID: #{b._id.slice(-5)}</p>
-                  </td>
-                  <td className="px-8 py-5">
-                    <span className="text-sm font-semibold text-slate-600">{b.space?.name}</span>
-                  </td>
-                  <td className="px-8 py-5">
-                    <span className="text-base font-black text-slate-900">₹{b.totalAmount.toLocaleString()}</span>
-                  </td>
-                  <td className="px-8 py-5">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700">
-                      SUCCESS
-                    </span>
-                  </td>
-                  <td className="px-8 py-5 text-right">
-                    <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                      <MoreVertical size={18} />
-                    </button>
-                  </td>
-                </tr>
+      {/* PIE + UTILIZATION */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <ChartCard title="Bookings by Space">
+          <PieChart>
+            <Pie
+              data={analytics.bookingsBySpace}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={50}
+              outerRadius={90}
+            >
+              {(analytics.bookingsBySpace || []).map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
               ))}
-            </tbody>
-          </table>
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </ChartCard>
+
+        <ChartCard title="Revenue Distribution">
+          <PieChart>
+            <Pie
+              data={analytics.revenueBySpace}
+              dataKey="value"
+              nameKey="name"
+              outerRadius={90}
+            >
+              {(analytics.revenueBySpace || []).map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(v) => `₹${v.toLocaleString()}`} />
+            <Legend />
+          </PieChart>
+        </ChartCard>
+
+        <div className="bg-white rounded-[2rem] p-6 sm:p-8 border space-y-6">
+          <h3 className="font-extrabold">Space Utilization</h3>
+          <UtilBar label="Cabins" value={analytics.occupancy?.cabins || 0} />
+          <UtilBar label="Desks" value={analytics.occupancy?.desks || 0} />
+          <UtilBar label="Conference" value={analytics.occupancy?.conference || 0} />
         </div>
+      </div>
+
+      {/* RECENT BOOKINGS */}
+      <div className="bg-white rounded-[2rem] border overflow-x-auto">
+        <div className="p-6 border-b font-extrabold">
+          Recent Transactions
+        </div>
+        <table className="min-w-full text-sm">
+          <tbody>
+            {(analytics.recentBookings || []).map((b) => (
+              <tr key={b._id} className="border-t hover:bg-slate-50">
+                <td className="p-4 font-bold">{b.userName}</td>
+                <td className="p-4">{b.space?.name}</td>
+                <td className="p-4 font-black">
+                  ₹{b.totalAmount?.toLocaleString()}
+                </td>
+                <td className="p-4 text-right">
+                  <MoreVertical />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-/* REFINED SUB-COMPONENTS */
+/* ---------------- COMPONENTS ---------------- */
 
-function StatCard({ title, value, icon, color, trend }) {
+function ChartCard({ title, children }) {
+  return (
+    <div className="bg-white rounded-[2rem] p-6 sm:p-8 border h-[320px] sm:h-[360px]">
+      <h3 className="font-extrabold mb-4">{title}</h3>
+      <ResponsiveContainer width="100%" height="100%">
+        {children}
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function StatCard({ title, value, icon, color }) {
   const colors = {
-    indigo: "bg-indigo-600 shadow-indigo-100",
-    violet: "bg-violet-600 shadow-violet-100",
-    emerald: "bg-emerald-600 shadow-emerald-100",
-    amber: "bg-amber-600 shadow-amber-100",
+    indigo: "bg-indigo-600",
+    violet: "bg-violet-600",
+    emerald: "bg-emerald-600",
+    amber: "bg-amber-600",
   };
 
   return (
-    <div className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-      <div className="flex justify-between items-start">
-        <div className={`p-3 rounded-2xl text-white ${colors[color]}`}>
-          {cloneElement(icon, { size: 22 })}
-        </div>
-        <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${trend.includes('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-500'}`}>
-          {trend}
-        </span>
+    <div className="bg-white p-6 rounded-[1.5rem] border hover:shadow-lg transition">
+      <div className={`p-3 w-fit rounded-xl text-white ${colors[color]}`}>
+        {cloneElement(icon, { size: 22 })}
       </div>
-      <div className="mt-4">
-        <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{title}</p>
-        <p className="text-3xl font-black text-slate-900 mt-1">{value}</p>
+      <p className="text-slate-400 mt-4 text-sm font-bold">{title}</p>
+      <p className="text-2xl sm:text-3xl font-black">{value}</p>
+    </div>
+  );
+}
+
+function UtilBar({ label, value }) {
+  return (
+    <div>
+      <div className="flex justify-between text-sm font-bold mb-1">
+        <span>{label}</span>
+        <span>{value}%</span>
+      </div>
+      <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-indigo-600"
+          style={{ width: `${value}%` }}
+        />
       </div>
     </div>
   );
 }
 
-// Minimal helper to clone icons with specific size
-import { cloneElement } from "react";
-
 function DashboardSkeleton() {
   return (
-    <div className="p-8 animate-pulse space-y-8">
-      <div className="h-12 w-64 bg-slate-200 rounded-xl"></div>
-      <div className="grid grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-200 rounded-[1.5rem]"></div>)}
-      </div>
-      <div className="grid grid-cols-3 gap-8">
-        <div className="h-64 bg-slate-200 rounded-[2rem]"></div>
-        <div className="col-span-2 h-64 bg-slate-200 rounded-[2rem]"></div>
+    <div className="p-8 animate-pulse space-y-6">
+      <div className="h-10 w-48 bg-slate-200 rounded"></div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+        {[1,2,3,4].map(i => (
+          <div key={i} className="h-28 bg-slate-200 rounded-xl" />
+        ))}
       </div>
     </div>
   );
