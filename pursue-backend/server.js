@@ -28,6 +28,10 @@ app.use("/api/admin/bookings", require("./routes/admin/bookingRoutes"));
 app.use("/api/admin/leads", require("./routes/admin/leadRoutes"));
 app.use("/api/admin/inventory", require("./routes/admin/inventoryRoutes"));
 
+app.use("/api/admin/payments", require("./routes/admin/adminPaymentRoutes"));
+app.use("/api/admin/invoices", require("./routes/admin/adminInvoiceRoutes"));
+
+
 // User Routes
 app.use("/api/user", require("./routes/user/userAuthRoutes"));
 app.use("/api/user/bookings", require("./routes/user/bookingRoutes"));
