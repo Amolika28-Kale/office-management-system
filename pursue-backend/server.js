@@ -29,7 +29,7 @@ app.use("/api/admin/leads", require("./routes/admin/leadRoutes"));
 app.use("/api/admin/inventory", require("./routes/admin/inventoryRoutes"));
 
 // User Routes
-// app.use("/api/user/auth", require("./routes/user/userAuthRoutes"));
+app.use("/api/user", require("./routes/user/userAuthRoutes"));
 app.use("/api/user/bookings", require("./routes/user/bookingRoutes"));
 app.use("/api/user/spaces", require("./routes/user/spaceRoutes"));
 

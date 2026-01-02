@@ -1,7 +1,15 @@
-const router = require("express").Router();
-const ctrl = require("../../controllers/user/authController");
+const express = require("express");
+const router = express.Router();
+const auth = require("../../middlewares/authMiddleware"); // ✅ FIXED PATH
 
-router.post("/register", ctrl.register);
-router.post("/login", ctrl.login);
+const {
+  getMyProfile,
+  updateMyProfile,
+  changePassword,
+} = require("../../controllers/user/userAuthController");
+
+router.get("/me", auth, getMyProfile);
+router.put("/me", auth, updateMyProfile);
+router.put("/change-password", auth, changePassword);
 
 module.exports = router;

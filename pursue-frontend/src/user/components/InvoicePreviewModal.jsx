@@ -20,7 +20,7 @@ const handleDownload = async () => {
 
   const load = async () => {
     const res = await getInvoiceById(invoiceId);
-    setInvoice(res); // ✅ FIXED
+    setInvoice(res); 
   };
 
   if (!invoice) return null;

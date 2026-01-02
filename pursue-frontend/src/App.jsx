@@ -24,10 +24,9 @@ import EditInventory from "./admin/pages/UpdateInventory";
 import UserDashboard from "./user/pages/UserDashboard";
 import UserLayout from "./user/components/UserLayout";
 import MyBookings from "./user/pages/MyBooking";
-import AddBooking from "./user/pages/AddBooking";
-import EditBooking from "./user/pages/EditBooking";
 import Payments from "./user/pages/Payments";
 import Invoices from "./user/pages/Invoices";
+import UserSettings from "./user/pages/UserSettings";
 
 export default function App() {
   return (
@@ -88,10 +87,10 @@ export default function App() {
 >
   <Route index element={<UserDashboard />} />
   <Route path="/user/bookings" element={<MyBookings />} />
-<Route path="/user/bookings/new" element={<AddBooking />} />
-<Route path="/user/bookings/edit/:id" element={<EditBooking />} />
 <Route path="/user/payments" element={<Payments />} />
 <Route path="/user/invoices" element={<Invoices />} />
+<Route path="/user/settings" element={<UserSettings />} />
+
 </Route>
 
         {/* FALLBACK */}
