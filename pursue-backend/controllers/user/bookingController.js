@@ -7,7 +7,8 @@ const User = require("../../models/user/User");
 ========================= */
 exports.createBooking = async (req, res) => {
   try {
-    console.log("payload",req.body)
+    console.log("payload", req.body);
+
     const { spaceId, fromDate, toDate, planType, notes } = req.body;
 
     const user = await User.findById(req.user.id);
@@ -17,25 +18,98 @@ exports.createBooking = async (req, res) => {
       return res.status(404).json({ message: "User or Space not found" });
     }
 
-    /* 🔢 Calculate amount (basic example) */
-    const start = new Date(fromDate);
-    const end = new Date(toDate);
-    const months =
-      (end.getFullYear() - start.getFullYear()) * 12 +
-      (end.getMonth() - start.getMonth()) +
-      1;
+    let start = new Date(fromDate);
+    let end = new Date(toDate);
+    let totalAmount = 0;
 
-    const totalAmount = space.price * months;
+    /* =========================
+       CONFERENCE ROOM RULES
+    ========================= */
+    if (space.type === "Conference") {
+      // Enforce DAILY only
+      if (planType !== "Daily") {
+        return res.status(400).json({
+          message: "Conference room can be booked only for Daily plan",
+        });
+      }
 
+      // Force 1 PM - 2 PM
+      start = new Date(`${start.toISOString().slice(0, 10)}T13:00:00`);
+      end = new Date(`${start.toISOString().slice(0, 10)}T14:00:00`);
+
+      // Prevent overlap
+      const conflict = await Booking.findOne({
+        spaceId,
+        status: { $ne: "cancelled" },
+        fromDate: { $lt: end },
+        toDate: { $gt: start },
+      });
+
+      if (conflict) {
+        return res.status(409).json({
+          message: "Conference room already booked for this time",
+        });
+      }
+
+      totalAmount = space.price; // 1 hour fixed
+    }
+
+    /* =========================
+       CABIN / DESK LOGIC
+    ========================= */
+    else {
+      if (!start || !end || start > end) {
+        return res.status(400).json({ message: "Invalid date range" });
+      }
+
+      // Prevent overlap
+      const conflict = await Booking.findOne({
+        spaceId,
+        status: { $ne: "cancelled" },
+        fromDate: { $lt: end },
+        toDate: { $gt: start },
+      });
+
+      if (conflict) {
+        return res.status(409).json({
+          message: "This space is already booked for selected dates",
+        });
+      }
+
+      // Amount calculation
+      if (planType === "Daily") {
+        const days =
+          Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        totalAmount = space.price * days;
+      }
+
+      if (planType === "Weekly") {
+        const weeks =
+          Math.ceil((end - start) / (1000 * 60 * 60 * 24 * 7)) || 1;
+        totalAmount = space.price * weeks;
+      }
+
+      if (planType === "Monthly") {
+        const months =
+          (end.getFullYear() - start.getFullYear()) * 12 +
+          (end.getMonth() - start.getMonth()) +
+          1;
+        totalAmount = space.price * months;
+      }
+    }
+
+    /* =========================
+       CREATE BOOKING
+    ========================= */
     const booking = await Booking.create({
       userId: user._id,
-      userName: user.name,           // ✅ FIX
-      userEmail: user.email,         // ✅ FIX
+      userName: user.name,
+      userEmail: user.email,
       spaceId: space._id,
-      fromDate,
-      toDate,
+      fromDate: start,
+      toDate: end,
       planType,
-      totalAmount,                   // ✅ FIX
+      totalAmount,
       notes,
       status: "pending",
     });

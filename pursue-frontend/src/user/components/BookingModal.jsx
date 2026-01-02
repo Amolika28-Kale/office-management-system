@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
-import { LucideX, LucideArmchair, LucideLayout, LucideUsers, LucideLoader2 } from "lucide-react";
+import {
+  LucideX,
+  LucideArmchair,
+  LucideLayout,
+  LucideUsers,
+  LucideLoader2,
+} from "lucide-react";
 import { createBooking, updateBooking } from "../services/bookingService";
 import { fetchSpaces } from "../../user/services/spaceService";
 
-export default function BookingModal({ booking, onClose, onSuccess, defaultType }) {
+export default function BookingModal({
+  booking,
+  onClose,
+  onSuccess,
+  defaultType,
+}) {
   const [spaces, setSpaces] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -16,6 +27,9 @@ export default function BookingModal({ booking, onClose, onSuccess, defaultType 
     notes: booking?.notes || "",
   });
 
+  const isConference = form.spaceType === "Conference";
+
+  /* ---------------- LOAD SPACES ---------------- */
   useEffect(() => {
     loadSpaces(form.spaceType);
   }, [form.spaceType]);
@@ -23,25 +37,45 @@ export default function BookingModal({ booking, onClose, onSuccess, defaultType 
   const loadSpaces = async (type) => {
     try {
       const res = await fetchSpaces({ type: type.toLowerCase() });
-      setSpaces(res.data);
+      setSpaces(res.data || []);
     } catch (err) {
       console.error("Failed to load spaces", err);
       setSpaces([]);
     }
   };
 
+  /* ---------------- CONFERENCE AUTO RULES ---------------- */
+  useEffect(() => {
+    if (isConference && form.fromDate) {
+      setForm((prev) => ({
+        ...prev,
+        planType: "Daily",
+        toDate: prev.fromDate,
+      }));
+    }
+  }, [form.fromDate, isConference]);
+
+  /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async () => {
-    if (!form.spaceId || !form.fromDate || !form.toDate) {
-      alert("Please fill in the required fields.");
+    if (!form.spaceId || !form.fromDate) {
+      alert("Please fill required fields");
       return;
     }
 
     setIsSubmitting(true);
+
     const payload = {
       spaceId: form.spaceId,
-      fromDate: new Date(form.fromDate).toISOString(),
-      toDate: new Date(form.toDate).toISOString(),
-      planType: form.planType,
+
+      fromDate: isConference
+        ? new Date(`${form.fromDate}T13:00:00`).toISOString()
+        : new Date(form.fromDate).toISOString(),
+
+      toDate: isConference
+        ? new Date(`${form.fromDate}T14:00:00`).toISOString()
+        : new Date(form.toDate).toISOString(),
+
+      planType: isConference ? "Daily" : form.planType,
       notes: form.notes,
     };
 
@@ -49,147 +83,186 @@ export default function BookingModal({ booking, onClose, onSuccess, defaultType 
       booking
         ? await updateBooking(booking._id, payload)
         : await createBooking(payload);
+
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error("Submission failed", error);
+    } catch (err) {
+      console.error("Booking failed", err);
+      alert(err.response?.data?.message || "Booking failed");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
         
         {/* HEADER */}
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h3 className="text-xl font-bold text-gray-800">
-            {booking ? "Edit Your Booking" : "Reserve a Space"}
+        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+          <h3 className="text-xl font-bold">
+            {booking ? "Edit Booking" : "Book a Space"}
           </h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
-            <LucideX size={20} />
+          <button onClick={onClose}>
+            <LucideX />
           </button>
         </div>
 
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
-          
-          {/* SPACE TYPE SELECTOR */}
+        {/* BODY */}
+        <div className="p-6 space-y-5">
+
+          {/* SPACE TYPE */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 block">
-              1. Select Category
+            <label className="text-xs font-bold uppercase text-gray-500 mb-2 block">
+              Select Space Type
             </label>
             <div className="grid grid-cols-3 gap-3">
-              <TypeCard 
-                label="Cabin" 
-                icon={<LucideLayout size={18} />} 
-                active={form.spaceType === "Cabin"} 
-                onClick={() => setForm({ ...form, spaceType: "Cabin", spaceId: "" })} 
+              <TypeCard
+                label="Cabin"
+                icon={<LucideLayout />}
+                active={form.spaceType === "Cabin"}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    spaceType: "Cabin",
+                    spaceId: "",
+                  })
+                }
               />
-              <TypeCard 
-                label="Desk" 
-                icon={<LucideArmchair size={18} />} 
-                active={form.spaceType === "Desk"} 
-                onClick={() => setForm({ ...form, spaceType: "Desk", spaceId: "" })} 
+              <TypeCard
+                label="Desk"
+                icon={<LucideArmchair />}
+                active={form.spaceType === "Desk"}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    spaceType: "Desk",
+                    spaceId: "",
+                  })
+                }
               />
-              <TypeCard 
-                label="Conference" 
-                icon={<LucideUsers size={18} />} 
-                active={form.spaceType === "Conference"} 
-                onClick={() => setForm({ ...form, spaceType: "Conference", spaceId: "" })} 
+              <TypeCard
+                label="Conference"
+                icon={<LucideUsers />}
+                active={form.spaceType === "Conference"}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    spaceType: "Conference",
+                    spaceId: "",
+                    planType: "Daily",
+                    toDate: form.fromDate,
+                  })
+                }
               />
             </div>
           </div>
 
-          {/* SPACE DROPDOWN */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">Specific Space</label>
+          {/* SPACE */}
+          <div>
+            <label className="text-sm font-semibold">Space</label>
             <select
-              className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none"
+              className="w-full mt-1 p-3 border rounded-xl"
               value={form.spaceId}
-              onChange={(e) => setForm({ ...form, spaceId: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, spaceId: e.target.value })
+              }
             >
-              <option value="">Choose a {form.spaceType}...</option>
+              <option value="">Select {form.spaceType}</option>
               {spaces.map((s) => (
-                <option key={s._id} value={s._id}>{s.name}</option>
+                <option key={s._id} value={s._id}>
+                  {s.name}
+                </option>
               ))}
             </select>
           </div>
 
           {/* DATES */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">From Date</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-semibold">Date</label>
               <input
                 type="date"
-                className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none"
+                className="w-full mt-1 p-3 border rounded-xl"
                 value={form.fromDate}
-                onChange={(e) => setForm({ ...form, fromDate: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, fromDate: e.target.value })
+                }
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">To Date</label>
+
+            <div>
+              <label className="text-sm font-semibold">To</label>
               <input
                 type="date"
-                className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none"
+                disabled={isConference}
+                className="w-full mt-1 p-3 border rounded-xl disabled:bg-gray-100"
                 value={form.toDate}
-                onChange={(e) => setForm({ ...form, toDate: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, toDate: e.target.value })
+                }
               />
             </div>
           </div>
 
-          {/* PLAN TYPE */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">Subscription Plan</label>
-            <div className="flex gap-2">
-              {["Daily", "Weekly", "Monthly"].map((plan) => (
-                <button
-                  key={plan}
-                  type="button"
-                  onClick={() => setForm({ ...form, planType: plan })}
-                  className={`flex-1 py-2 text-sm rounded-lg font-medium border transition-all ${
-                    form.planType === plan 
-                    ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100" 
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  {plan}
-                </button>
-              ))}
+          {/* PLAN */}
+          <div>
+            <label className="text-sm font-semibold">Plan</label>
+            <div className="flex gap-2 mt-2">
+              {["Daily", "Weekly", "Monthly"].map((plan) => {
+                const disabled = isConference && plan !== "Daily";
+                return (
+                  <button
+                    key={plan}
+                    disabled={disabled}
+                    onClick={() =>
+                      setForm({ ...form, planType: plan })
+                    }
+                    className={`flex-1 py-2 rounded-lg border font-medium ${
+                      form.planType === plan
+                        ? "bg-blue-600 text-white"
+                        : "bg-white"
+                    } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                  >
+                    {plan}
+                  </button>
+                );
+              })}
             </div>
+
+            {isConference && (
+              <p className="text-xs text-orange-600 mt-2 font-medium">
+                ⏰ Conference booking is allowed only from 1:00 PM to 2:00 PM
+              </p>
+            )}
           </div>
 
           {/* NOTES */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">Notes (Optional)</label>
+          <div>
+            <label className="text-sm font-semibold">Notes</label>
             <textarea
-              className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none resize-none"
-              placeholder="Any special requirements?"
+              className="w-full mt-1 p-3 border rounded-xl"
               rows={2}
               value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, notes: e.target.value })
+              }
             />
           </div>
         </div>
 
-        {/* FOOTER ACTIONS */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-          <button 
-            onClick={onClose} 
-            className="px-5 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
-          >
+        {/* FOOTER */}
+        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+          <button onClick={onClose} className="font-semibold text-gray-500">
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-100 transition-all active:scale-95 min-w-[140px]"
+            className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2"
           >
-            {isSubmitting ? (
-              <LucideLoader2 className="animate-spin" size={18} />
-            ) : (
-              booking ? "Update" : "Confirm Booking"
-            )}
+            {isSubmitting && <LucideLoader2 className="animate-spin" />}
+            {booking ? "Update" : "Confirm Booking"}
           </button>
         </div>
       </div>
@@ -197,17 +270,17 @@ export default function BookingModal({ booking, onClose, onSuccess, defaultType 
   );
 }
 
-/* HELPER COMPONENT */
+/* ---------------- TYPE CARD ---------------- */
 const TypeCard = ({ label, icon, active, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
-      active 
-      ? "border-blue-600 bg-blue-50 text-blue-600 shadow-inner" 
-      : "border-gray-100 bg-white text-gray-400 hover:border-gray-200 hover:bg-gray-50"
+    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition ${
+      active
+        ? "border-blue-600 bg-blue-50 text-blue-600"
+        : "border-gray-200 text-gray-400"
     }`}
   >
     {icon}
-    <span className="text-xs font-bold uppercase tracking-tighter">{label}</span>
+    <span className="text-xs font-bold uppercase">{label}</span>
   </button>
 );
