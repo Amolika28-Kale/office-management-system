@@ -27,6 +27,8 @@ import MyBookings from "./user/pages/MyBooking";
 import Payments from "./user/pages/Payments";
 import Invoices from "./user/pages/Invoices";
 import UserSettings from "./user/pages/UserSettings";
+import AdminPayments from "./admin/pages/AdminPayments";
+import AdminInvoices from "./admin/pages/AdminInvoices";
 
 export default function App() {
   return (
@@ -74,6 +76,10 @@ export default function App() {
           <Route path="inventory" element={<InventoryList />} />
           <Route path="inventory/add" element={<AddInventory />} />
           <Route path="inventory/edit/:id" element={<EditInventory />} />
+          {/* Payments */}
+          <Route path="/admin/payments" element={<AdminPayments />} />
+          {/* Invoices */}
+          <Route path="/admin/invoices" element={<AdminInvoices />} />
         </Route>
 
         {/* ================= USER ================= */}
