@@ -10,7 +10,7 @@ const authHeader = () => ({
 
 /* DASHBOARD STATS */
 export const fetchDashboardStats = () =>
-  axios.get(`${API}/stats`, authHeader());
+  axios.get(`${API}/`, authHeader());
 
 /* DASHBOARD ANALYTICS */
 export const fetchDashboardAnalytics = (params = {}) =>
