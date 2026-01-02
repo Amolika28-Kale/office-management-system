@@ -4,20 +4,17 @@ import {
   LucideDownload,
   LucideEye,
   LucideSearch,
-  LucideMail
 } from "lucide-react";
+import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
 
-import {
-  fetchInvoices,
-  downloadInvoice,
-  emailInvoice,
-  generateNewInvoice
-} from "../../services/adminInvoiceService";
+import { fetchInvoices } from "../../services/adminInvoiceService";
 
 export default function AdminInvoices() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [viewInvoice, setViewInvoice] = useState(null);
 
   useEffect(() => {
     loadInvoices();
@@ -35,7 +32,7 @@ export default function AdminInvoices() {
     }
   };
 
-  /* SEARCH (SAFE & ROBUST) */
+  /* SEARCH */
   const filteredInvoices = invoices.filter((inv) => {
     const q = search.toLowerCase();
     return (
@@ -46,50 +43,51 @@ export default function AdminInvoices() {
     );
   });
 
-  /* ACTIONS */
-  const handleView = (id) => {
-    window.open(`/admin/invoices/${id}`, "_blank");
+  /* VIEW (MODAL) */
+  const handleView = (invoice) => {
+    setViewInvoice(invoice);
   };
 
-  const handleDownload = async (inv) => {
-    try {
-      const res = await downloadInvoice(inv._id);
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+  /* DOWNLOAD PDF (FRONTEND ONLY) */
+  const handleDownload = (inv) => {
+    const doc = new jsPDF();
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `Invoice-${inv.invoiceNumber}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error("Download failed", err);
-    }
+    doc.setFontSize(20);
+    doc.text("INVOICE", 20, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Invoice #: ${inv.invoiceNumber}`, 20, 40);
+    doc.text(`Customer: ${inv.user?.name}`, 20, 50);
+    doc.text(`Amount: ₹${inv.amount}`, 20, 60);
+    doc.text(`Status: ${inv.status}`, 20, 70);
+    doc.text(
+      `Date: ${new Date(inv.createdAt).toDateString()}`,
+      20,
+      80
+    );
+
+    doc.save(`Invoice-${inv.invoiceNumber}.pdf`);
   };
 
-  const handleEmail = async (id) => {
-    try {
-      await emailInvoice(id);
-      alert("Invoice emailed successfully");
-    } catch (err) {
-      console.error("Email failed", err);
-    }
-  };
+  /* GENERATE NEW → EXCEL (FRONTEND ONLY) */
+  const handleGenerateNew = () => {
+    if (!invoices.length) return;
 
-  const handleGenerateNew = async () => {
-    try {
-      const res = await generateNewInvoice();
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+    const data = invoices.map((inv, index) => ({
+      "Sr No": index + 1,
+      "Invoice #": inv.invoiceNumber,
+      "Customer": inv.user?.name,
+      "Amount (₹)": inv.amount,
+      "Status": inv.status,
+      "Date": new Date(inv.createdAt).toLocaleDateString("en-IN"),
+    }));
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `New-Invoice-${Date.now()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error("Generate invoice failed", err);
-    }
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Invoices");
+
+    XLSX.writeFile(workbook, "invoices-report.xlsx");
   };
 
   return (
@@ -97,13 +95,18 @@ export default function AdminInvoices() {
       {/* HEADER */}
       <div>
         <h1 className="text-3xl font-black">Invoice Management</h1>
-        <p className="text-slate-500">Review, track, and issue billing documents</p>
+        <p className="text-slate-500">
+          Review, track, and issue billing documents
+        </p>
       </div>
 
       {/* SEARCH + GENERATE */}
       <div className="flex gap-4">
         <div className="relative flex-1">
-          <LucideSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <LucideSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Search invoice, customer, amount..."
@@ -153,17 +156,12 @@ export default function AdminInvoices() {
                       <IconButton
                         icon={<LucideEye size={16} />}
                         color="blue"
-                        onClick={() => handleView(inv._id)}
+                        onClick={() => handleView(inv)}
                       />
                       <IconButton
                         icon={<LucideDownload size={16} />}
                         color="slate"
                         onClick={() => handleDownload(inv)}
-                      />
-                      <IconButton
-                        icon={<LucideMail size={16} />}
-                        color="indigo"
-                        onClick={() => handleEmail(inv._id)}
                       />
                     </div>
                   </td>
@@ -173,6 +171,36 @@ export default function AdminInvoices() {
           </table>
         )}
       </div>
+
+      {/* VIEW MODAL */}
+      {viewInvoice && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 space-y-4">
+            <h2 className="text-xl font-black">
+              Invoice #{viewInvoice.invoiceNumber}
+            </h2>
+
+            <div className="text-sm space-y-2">
+              <p><b>Customer:</b> {viewInvoice.user?.name}</p>
+              <p><b>Amount:</b> ₹{viewInvoice.amount}</p>
+              <p><b>Status:</b> {viewInvoice.status}</p>
+              <p>
+                <b>Date:</b>{" "}
+                {new Date(viewInvoice.createdAt).toDateString()}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => setViewInvoice(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 font-bold"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -180,11 +208,13 @@ export default function AdminInvoices() {
 /* HELPERS */
 
 const StatusBadge = ({ status }) => (
-  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-    status === "paid"
-      ? "bg-emerald-50 text-emerald-600"
-      : "bg-amber-50 text-amber-600"
-  }`}>
+  <span
+    className={`px-3 py-1 rounded-full text-xs font-bold ${
+      status === "paid"
+        ? "bg-emerald-50 text-emerald-600"
+        : "bg-amber-50 text-amber-600"
+    }`}
+  >
     {status}
   </span>
 );
@@ -192,14 +222,13 @@ const StatusBadge = ({ status }) => (
 const IconButton = ({ icon, color, onClick }) => {
   const colors = {
     blue: "text-blue-600 hover:bg-blue-50",
-    indigo: "text-indigo-600 hover:bg-indigo-50",
     slate: "text-slate-500 hover:bg-slate-100",
   };
 
   return (
     <button
       onClick={onClick}
-      className={`p-2 rounded-xl ${colors[color]}`}
+      className={`p-2 rounded-xl transition ${colors[color]}`}
     >
       {icon}
     </button>

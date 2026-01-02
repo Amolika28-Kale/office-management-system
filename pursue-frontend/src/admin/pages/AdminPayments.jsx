@@ -9,11 +9,31 @@ import {
   LucideLoader2
 } from "lucide-react";
 import { fetchPayments } from "../../services/adminPaymentService";
+import * as XLSX from "xlsx";
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+const handleExport = () => {
+  if (!payments.length) return;
+
+  const exportData = payments.map((p, index) => ({
+    "Sr No": index + 1,
+    "Customer Name": p.user?.name || "-",
+    "Amount (₹)": p.amount,
+    "Status": p.status,
+    "Payment Method": p.method,
+    "Date": new Date(p.createdAt).toLocaleDateString("en-IN"),
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Payments Report");
+
+  XLSX.writeFile(workbook, "payments-report.xlsx");
+};
 
   useEffect(() => {
     loadPayments();
@@ -44,10 +64,14 @@ export default function AdminPayments() {
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Revenue Tracker</h1>
           <p className="text-slate-500 font-medium">Monitor and manage all system-wide transactions</p>
         </div>
-        <button className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-slate-200">
-          <LucideDownload size={18} />
-          Export Report
-        </button>
+      <button
+  onClick={handleExport}
+  className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-slate-200"
+>
+  <LucideDownload size={18} />
+  Export Report
+</button>
+
       </div>
 
      
