@@ -7,7 +7,7 @@ import {
   LucideFilter,
   LucideArrowUpDown
 } from "lucide-react";
-import { getMyInvoices } from "../services/invoiceService";
+import { downloadInvoicePDF, getMyInvoices } from "../services/invoiceService";
 import InvoicePreviewModal from "../components/InvoicePreviewModal";
 
 export default function Invoices() {
@@ -16,6 +16,17 @@ export default function Invoices() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const handleDownload = async (invoice) => {
+  const blob = await downloadInvoicePDF(invoice._id);
+  const url = window.URL.createObjectURL(new Blob([blob]));
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `${invoice.invoiceNumber}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
   useEffect(() => {
     load();
   }, []);
@@ -134,11 +145,13 @@ export default function Invoices() {
                           <LucideEye size={14} />
                           <span className="hidden sm:inline">View</span>
                         </button>
-                        <button
-                          className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                        >
-                          <LucideDownload size={16} />
-                        </button>
+                     <button
+  onClick={() => handleDownload(inv)}
+  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+>
+  <LucideDownload size={16} />
+</button>
+
                       </div>
                     </td>
                   </tr>

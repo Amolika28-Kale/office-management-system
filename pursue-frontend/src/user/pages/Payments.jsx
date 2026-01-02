@@ -93,9 +93,6 @@ export default function Payments() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex justify-between items-center">
           <h3 className="text-lg font-bold text-gray-800">Recent Transactions</h3>
-          <button className="text-sm text-indigo-600 font-semibold hover:underline flex items-center gap-1">
-            Download All <LucideArrowRight size={14} />
-          </button>
         </div>
 
         <div className="overflow-x-auto">

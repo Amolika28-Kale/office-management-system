@@ -43,14 +43,36 @@ export default function MyBookings() {
     fetchBookings();
   };
 
-  const filteredBookings = useMemo(() => {
-    if (!Array.isArray(bookings)) return [];
-    return bookings.filter((b) => {
-      const matchTab = activeTab === "all" || b.spaceId?.type?.toLowerCase() === activeTab;
-      const matchSearch = b.spaceId?.name?.toLowerCase().includes(search.toLowerCase());
-      return matchTab && matchSearch;
-    });
-  }, [bookings, activeTab, search]);
+const filteredBookings = useMemo(() => {
+  if (!Array.isArray(bookings)) return [];
+
+  const query = search.trim().toLowerCase();
+
+  return bookings.filter((b) => {
+    // TAB FILTER
+    const spaceType = b?.spaceId?.type?.toLowerCase();
+    const matchTab = activeTab === "all" || spaceType === activeTab;
+
+    // SEARCH FILTER (safe + multi-field)
+    if (!query) return matchTab;
+
+    const spaceName = b?.spaceId?.name?.toLowerCase() || "";
+    const type = b?.spaceId?.type?.toLowerCase() || "";
+    const status = b?.status?.toLowerCase() || "";
+    const startDate = b?.startDate
+      ? new Date(b.startDate).toLocaleDateString().toLowerCase()
+      : "";
+
+    const matchSearch =
+      spaceName.includes(query) ||
+      type.includes(query) ||
+      status.includes(query) ||
+      startDate.includes(query);
+
+    return matchTab && matchSearch;
+  });
+}, [bookings, activeTab, search]);
+
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6 animate-in fade-in duration-500">

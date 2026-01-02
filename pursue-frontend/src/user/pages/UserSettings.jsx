@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { 
   LucideUser, LucideShieldCheck, LucideMail, LucidePhone, 
   LucideBuilding, LucideSave, LucideLock, LucideLoader2,
-  LucideChevronRight, LucideCamera
+  LucideChevronRight
 } from "lucide-react";
+
 import { getMyProfile, updateMyProfile, changePassword } from "../services/userService";
 
 export default function UserSettings() {
@@ -87,25 +88,7 @@ export default function UserSettings() {
           {activeTab === 'profile' ? (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
               
-              {/* AVATAR UPLOAD SECTION */}
-              <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm flex flex-col md:flex-row items-center gap-8">
-                <div className="relative group">
-                  <div className="h-28 w-28 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-indigo-200">
-                    {profile.name?.charAt(0)}
-                  </div>
-                  <button className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg border border-slate-100 text-slate-600 hover:text-indigo-600 transition-colors">
-                    <LucideCamera size={18} />
-                  </button>
-                </div>
-                <div className="text-center md:text-left">
-                  <h4 className="text-xl font-bold text-slate-800">Your Photo</h4>
-                  <p className="text-slate-500 text-sm mt-1">This will be displayed on your profile and bookings.</p>
-                  <div className="mt-4 flex gap-3">
-                    <button className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all">Upload New</button>
-                    <button className="px-4 py-2 bg-slate-50 text-slate-500 text-xs font-bold rounded-lg hover:bg-slate-100 transition-all">Remove</button>
-                  </div>
-                </div>
-              </div>
+          
 
               {/* FORM */}
               <section className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
