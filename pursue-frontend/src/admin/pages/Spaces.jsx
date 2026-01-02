@@ -131,59 +131,71 @@ export default function Spaces() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-[2rem] border shadow-sm overflow-hidden">
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="p-6 text-xs font-black text-slate-400">SPACE</th>
-                <th className="p-6 text-xs font-black text-slate-400">TYPE</th>
-                <th className="p-6 text-xs font-black text-slate-400">PRICE</th>
-                <th className="p-6 text-xs font-black text-slate-400 text-center">STATUS</th>
-                <th className="p-6 text-xs font-black text-slate-400 text-right">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {spaces.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="p-20 text-center text-slate-400">
-                    No spaces found
-                  </td>
-                </tr>
-              ) : (
-                spaces.map((s) => (
-                  <tr key={s._id} className="hover:bg-slate-50">
-                    <td className="p-6">
-                      <div className="flex items-center gap-4">
-                        <MapPinIcon className="w-8 h-8 text-slate-400" />
-                        <div>
-                          <p className="font-bold">{s.name}</p>
-                          <p className="text-xs text-slate-400">ID: {s._id.slice(-6)}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-6 capitalize">
-                      {s.type}
-                      <div className="text-xs text-slate-400 flex items-center gap-1">
-                        <UserGroupIcon className="w-4 h-4" /> {s.capacity || 0}
-                      </div>
-                    </td>
-                    <td className="p-6 font-black">₹{s.price}/hr</td>
-                    <td className="p-6 text-center">
-                      <StatusBadge active={s.isActive} />
-                    </td>
-                    <td className="p-6 flex justify-end gap-2">
-                      <ActionBtn icon={<PencilIcon />} label="Edit" onClick={() => navigate(`/admin/spaces/edit/${s._id}`)} />
-                      <ActionBtn icon={<ArrowsRightLeftIcon />} label="Toggle" color="amber" onClick={() => handleToggle(s._id)} />
-                      <ActionBtn icon={<TrashIcon />} label="Delete" color="red" onClick={() => handleDelete(s._id)} />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+    {/* TABLE – Desktop */}
+<div className="hidden md:block bg-white rounded-[2rem] border shadow-sm overflow-hidden">
+  <div className="overflow-x-auto">
+    <table className="w-full">
+      <thead>
+        <tr className="border-b">
+          <th className="p-6 text-xs font-black text-slate-400">SPACE</th>
+          <th className="p-6 text-xs font-black text-slate-400">TYPE</th>
+          <th className="p-6 text-xs font-black text-slate-400">PRICE</th>
+          <th className="p-6 text-xs font-black text-slate-400 text-center">STATUS</th>
+          <th className="p-6 text-xs font-black text-slate-400 text-right">ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y">
+        {spaces.map((s) => (
+          <tr key={s._id} className="hover:bg-slate-50">
+            <td className="p-6 font-bold">{s.name}</td>
+            <td className="p-6 capitalize">{s.type}</td>
+            <td className="p-6 font-black">₹{s.price}/hr</td>
+            <td className="p-6 text-center">
+              <StatusBadge active={s.isActive} />
+            </td>
+            <td className="p-6 flex justify-end gap-2">
+              <ActionBtn icon={<PencilIcon />} onClick={() => navigate(`/admin/spaces/edit/${s._id}`)} />
+              <ActionBtn icon={<ArrowsRightLeftIcon />} color="amber" onClick={() => handleToggle(s._id)} />
+              <ActionBtn icon={<TrashIcon />} color="red" onClick={() => handleDelete(s._id)} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{/* MOBILE VIEW */}
+<div className="md:hidden space-y-4">
+  {spaces.length === 0 ? (
+    <p className="text-center text-slate-400 py-20">No spaces found</p>
+  ) : (
+    spaces.map((s) => (
+      <div
+        key={s._id}
+        className="bg-white rounded-2xl border p-4 shadow-sm space-y-3"
+      >
+        <div className="flex justify-between items-start">
+          <h3 className="font-black text-lg">{s.name}</h3>
+          <StatusBadge active={s.isActive} />
+        </div>
+
+        <p className="text-sm capitalize text-slate-500">
+          {s.type} • Capacity {s.capacity || 0}
+        </p>
+
+        <p className="font-black text-indigo-600">₹{s.price}/hr</p>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <ActionBtn icon={<PencilIcon />} onClick={() => navigate(`/admin/spaces/edit/${s._id}`)} />
+          <ActionBtn icon={<ArrowsRightLeftIcon />} color="amber" onClick={() => handleToggle(s._id)} />
+          <ActionBtn icon={<TrashIcon />} color="red" onClick={() => handleDelete(s._id)} />
         </div>
       </div>
+    ))
+  )}
+</div>
+
 
       {/* PAGINATION */}
       {pages > 1 && (
