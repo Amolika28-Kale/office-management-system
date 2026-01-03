@@ -30,6 +30,8 @@ import UserSettings from "./user/pages/UserSettings";
 import AdminPayments from "./admin/pages/AdminPayments";
 import AdminInvoices from "./admin/pages/AdminInvoices";
 import AdminSettings from "./admin/pages/AdminSettings";
+import Branches from "./admin/pages/Branch";
+import BranchForm from "./admin/pages/BranchForm";
 
 export default function App() {
   return (
@@ -83,6 +85,10 @@ export default function App() {
           <Route path="/admin/invoices" element={<AdminInvoices />} />
           {/* Settings */}
           <Route path="/admin/settings" element={<AdminSettings />} />
+          {/* Branches */}
+          <Route path="/admin/branches" element={<Branches />} />
+          <Route path="/admin/branches/new" element={<BranchForm />} />
+          <Route path="/admin/branches/edit/:id" element={<BranchForm />} />
         </Route>
 
         {/* ================= USER ================= */}

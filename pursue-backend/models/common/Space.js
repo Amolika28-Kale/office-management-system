@@ -11,6 +11,13 @@ const spaceSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // Space model
+branchId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Branch",
+  required: true
+},
+
     capacity: Number,
     price: {
       type: Number,

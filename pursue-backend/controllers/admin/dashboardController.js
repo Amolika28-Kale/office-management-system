@@ -3,6 +3,7 @@ const User = require("../../models/user/User");
 const Space = require("../../models/common/Space");
 const Booking = require("../../models/common/Booking");
 const Lead = require("../../models/admin/Leads");
+const Branch = require("../../models/admin/Branch");
 
 /* ---------------- DASHBOARD STATS ---------------- */
 exports.getDashboardStats = async (req, res) => {
@@ -48,16 +49,19 @@ exports.getDashboardAnalytics = async (req, res) => {
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const spaceType = req.query.spaceType || "all";
+const branchId = req.query.branchId || "all";
 
     const startOfYear = new Date(year, 0, 1);
     const endOfYear = new Date(year + 1, 0, 1);
 
     /* Space Filter */
-    let spaceFilter = {};
-    if (spaceType !== "all") spaceFilter.type = spaceType;
+   let spaceFilter = {};
+if (spaceType !== "all") spaceFilter.type = spaceType;
+if (branchId !== "all") spaceFilter.branchId = branchId;
 
-    const spaces = await Space.find(spaceFilter);
-    const spaceIds = spaces.map(s => s._id);
+ const spaces = await Space.find(spaceFilter).select("_id");
+const spaceIds = spaces.map(s => s._id);
+
 
     /* ---------------- MONTHLY BOOKINGS ---------------- */
     const monthlyBookings = await Booking.aggregate([

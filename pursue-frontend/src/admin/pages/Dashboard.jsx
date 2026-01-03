@@ -12,6 +12,7 @@ import {
   fetchDashboardStats,
   fetchDashboardAnalytics
 } from "../../services/dashboardService";
+import { fetchBranches } from "../../services/branchServices";
 
 /* ---------------- CONSTANTS ---------------- */
 const COLORS = ["#4f46e5", "#22c55e", "#f59e0b", "#ef4444"];
@@ -33,23 +34,33 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState(DEFAULT_ANALYTICS);
   const [year, setYear] = useState(new Date().getFullYear());
   const [spaceType, setSpaceType] = useState("all");
+const [branches, setBranches] = useState([]);
+const [branchId, setBranchId] = useState("all");
 
   /* LOAD DATA */
   useEffect(() => {
     loadDashboard();
   }, [year, spaceType]);
 
+  useEffect(() => {
+  const loadBranches = async () => {
+    const res = await fetchBranches();
+    setBranches(res);
+  };
+  loadBranches();
+}, []);
+
   /* AUTO REFRESH */
   useEffect(() => {
     const interval = setInterval(loadDashboard, 30000);
     return () => clearInterval(interval);
-  }, [year, spaceType]);
+  },[year, spaceType, branchId]);
 
   const loadDashboard = async () => {
     try {
       const [statsRes, analyticsRes] = await Promise.all([
         fetchDashboardStats(),
-        fetchDashboardAnalytics({ year, spaceType }),
+        fetchDashboardAnalytics({ year, spaceType,branchId }),
       ]);
 
       setStats(statsRes?.data?.data || {});
@@ -106,6 +117,19 @@ export default function AdminDashboard() {
             <option value="desk">Desks</option>
             <option value="conference">Conference</option>
           </select>
+          <select
+  value={branchId}
+  onChange={e => setBranchId(e.target.value)}
+  className="px-4 py-2 rounded-xl border font-bold"
+>
+  <option value="all">All Branches</option>
+  {branches.map(b => (
+    <option key={b._id} value={b._id}>
+      {b.name}
+    </option>
+  ))}
+</select>
+
         </div>
       </div>
 

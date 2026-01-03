@@ -26,6 +26,7 @@ export default function AdminLayout() {
       title: "Core",
       items: [
         { to: "/admin/dashboard", icon: LayoutDashboard, label: "Overview" },
+        { to: "/admin/branches" , icon: Building2, label: "Branch Management" },
         { to: "/admin/spaces", icon: Building2, label: "Space Management" },
       ]
     },
