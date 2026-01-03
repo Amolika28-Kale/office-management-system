@@ -17,3 +17,10 @@ export const getActiveBookings = async () => {
   const res = await axios.get(`${API}/active-bookings`, authHeader());
   return res.data.data;
 };
+export const getUserDashboardAnalytics = async (params) => {
+  const res = await axios.get(`${API}/analytics`, {
+    ...authHeader(),
+    params,
+  });
+  return res.data.data;
+}
