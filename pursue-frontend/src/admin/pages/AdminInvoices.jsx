@@ -7,8 +7,10 @@ import {
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import * as XLSX from "xlsx";
-
+import "jspdf-autotable";
 import { fetchInvoices } from "../../services/adminInvoiceService";
+import InvoicePreviewModal from "../components/InvoicePreviewModal";
+import autoTable from "jspdf-autotable";
 
 export default function AdminInvoices() {
   const [invoices, setInvoices] = useState([]);
@@ -49,25 +51,88 @@ export default function AdminInvoices() {
   };
 
   /* DOWNLOAD PDF (FRONTEND ONLY) */
-  const handleDownload = (inv) => {
-    const doc = new jsPDF();
+const downloadPDF = (invoice) => {
+  const doc = new jsPDF();
 
-    doc.setFontSize(20);
-    doc.text("INVOICE", 20, 20);
+  /* SAFE DATA */
+  const invoiceNo = invoice.invoiceNumber || "N/A";
+  const invoiceDate = invoice.createdAt
+    ? new Date(invoice.createdAt).toLocaleDateString("en-IN")
+    : "-";
 
-    doc.setFontSize(12);
-    doc.text(`Invoice #: ${inv.invoiceNumber}`, 20, 40);
-    doc.text(`Customer: ${inv.user?.name}`, 20, 50);
-    doc.text(`Amount: ₹${inv.amount}`, 20, 60);
-    doc.text(`Status: ${inv.status}`, 20, 70);
-    doc.text(
-      `Date: ${new Date(inv.createdAt).toDateString()}`,
-      20,
-      80
-    );
+  const customerName = invoice.user?.name || "-";
+  const customerEmail = invoice.user?.email || "-";
 
-    doc.save(`Invoice-${inv.invoiceNumber}.pdf`);
-  };
+  const booking = invoice.payment?.booking;
+
+  const spaceName = booking?.spaceName || "Workspace Rent";
+  const period =
+    booking?.fromDate && booking?.toDate
+      ? `${new Date(booking.fromDate).toLocaleDateString(
+          "en-IN"
+        )} - ${new Date(booking.toDate).toLocaleDateString("en-IN")}`
+      : "-";
+
+  const subtotal = Number(invoice.amount || booking?.totalAmount || 0);
+  const gst = Math.round(subtotal * 0.18);
+  const total = subtotal + gst;
+
+  /* HEADER */
+  doc.setFontSize(18);
+  doc.text("INVOICE", 14, 20);
+
+  doc.setFontSize(11);
+  doc.text(`Invoice #: ${invoiceNo}`, 14, 30);
+  doc.text(`Date: ${invoiceDate}`, 14, 36);
+
+  /* COMPANY INFO */
+  doc.setFontSize(10);
+  doc.text("Pursue Co-Working Space", 140, 20);
+  doc.text("Mumbai, Maharashtra", 140, 26);
+  doc.text("GST: 27AABCU9603R1ZM", 140, 32);
+
+  /* BILL TO */
+  doc.setFontSize(11);
+  doc.text("Bill To:", 14, 50);
+  doc.setFontSize(10);
+  doc.text(customerName, 14, 56);
+  doc.text(customerEmail, 14, 62);
+
+  /* TABLE */
+  autoTable(doc, {
+    startY: 75,
+    head: [["Description", "Period", "Amount"]],
+    body: [
+      [spaceName, period, `Rs. ${subtotal}`],
+      ["GST (18%)", "-", `Rs. ${gst}`],
+    ],
+    styles: { fontSize: 10 },
+    headStyles: {
+      fillColor: [240, 240, 240],
+      textColor: [0, 0, 0],
+      fontStyle: "bold",
+    },
+    columnStyles: {
+      2: { halign: "right" },
+    },
+  });
+
+  /* TOTAL */
+  const y = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(11);
+  doc.text(`Total: Rs. ${total}`, 140, y);
+
+  /* FOOTER */
+  doc.setFontSize(10);
+  doc.text(
+    "Thank you for choosing Pursue Co-Working Space",
+    14,
+    y + 20
+  );
+
+  doc.save(`Invoice-${invoiceNo}.pdf`);
+};
+
 
   /* GENERATE NEW → EXCEL (FRONTEND ONLY) */
   const handleGenerateNew = () => {
@@ -161,7 +226,7 @@ export default function AdminInvoices() {
                       <IconButton
                         icon={<LucideDownload size={16} />}
                         color="slate"
-                        onClick={() => handleDownload(inv)}
+                        onClick={() => downloadPDF(inv)}
                       />
                     </div>
                   </td>
@@ -173,34 +238,13 @@ export default function AdminInvoices() {
       </div>
 
       {/* VIEW MODAL */}
-      {viewInvoice && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-lg rounded-2xl p-6 space-y-4">
-            <h2 className="text-xl font-black">
-              Invoice #{viewInvoice.invoiceNumber}
-            </h2>
+     {viewInvoice && (
+  <InvoicePreviewModal
+    invoice={viewInvoice}
+    onClose={() => setViewInvoice(null)}
+  />
+)}
 
-            <div className="text-sm space-y-2">
-              <p><b>Customer:</b> {viewInvoice.user?.name}</p>
-              <p><b>Amount:</b> ₹{viewInvoice.amount}</p>
-              <p><b>Status:</b> {viewInvoice.status}</p>
-              <p>
-                <b>Date:</b>{" "}
-                {new Date(viewInvoice.createdAt).toDateString()}
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                onClick={() => setViewInvoice(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 font-bold"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

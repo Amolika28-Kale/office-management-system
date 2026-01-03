@@ -9,6 +9,10 @@ import {
 } from "lucide-react";
 import { downloadInvoicePDF, getMyInvoices } from "../services/invoiceService";
 import InvoicePreviewModal from "../components/InvoicePreviewModal";
+import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
+import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState([]);

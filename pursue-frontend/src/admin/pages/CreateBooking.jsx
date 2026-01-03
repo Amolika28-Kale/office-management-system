@@ -111,7 +111,7 @@ export default function CreateBooking() {
             <div className="space-y-6">
               <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Customer & Resource</h3>
               
-              <FormGroup label="Select Member" icon={<LucideUser size={18} />}>
+              <FormGroup label="Select Member">
                 <select className="input-field" onChange={handleUserSelect} required>
                   <option value="">Choose a member...</option>
                   {users.map((u) => (
@@ -120,7 +120,7 @@ export default function CreateBooking() {
                 </select>
               </FormGroup>
 
-              <FormGroup label={`Select ${activeType}`} icon={<LucideLayout size={18} />}>
+              <FormGroup label={`Select ${activeType}`}>
                 <select className="input-field" name="space" value={form.space} onChange={handleChange} required>
                   <option value="">Choose workspace...</option>
                   {filteredSpaces.map((s) => (
@@ -135,15 +135,15 @@ export default function CreateBooking() {
               <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Duration & Pricing</h3>
               
               <div className="grid grid-cols-2 gap-4">
-                <FormGroup label="Start Date" icon={<LucideCalendar size={18} />}>
+                <FormGroup label="Start Date" >
                   <input type="date" name="startDate" className="input-field" onChange={handleChange} required />
                 </FormGroup>
-                <FormGroup label="End Date" icon={<LucideCalendar size={18} />}>
+                <FormGroup label="End Date" >
                   <input type="date" name="endDate" className="input-field" onChange={handleChange} required />
                 </FormGroup>
               </div>
 
-              <FormGroup label="Final Amount (INR)" icon={<LucideCreditCard size={18} />}>
+              <FormGroup label="Final Amount (INR)">
                 <input 
                   name="totalAmount" 
                   type="number" 
@@ -157,7 +157,7 @@ export default function CreateBooking() {
 
             {/* FULL WIDTH: NOTES */}
             <div className="md:col-span-2 space-y-2">
-              <FormGroup label="Administrative Notes" icon={<LucideFileText size={18} />}>
+              <FormGroup label="Administrative Notes">
                 <textarea 
                   name="notes" 
                   placeholder="Mention any specific requests or customizations..." 
