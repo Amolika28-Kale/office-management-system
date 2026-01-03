@@ -1,6 +1,7 @@
 const Booking = require("../../models/common/Booking");
 const Space = require("../../models/common/Space");
 const User = require("../../models/user/User");
+const { notifyAdmin } = require("../../utils/notify");
 
 /* =========================
    USER: CREATE BOOKING
@@ -113,7 +114,11 @@ exports.createBooking = async (req, res) => {
       notes,
       status: "pending",
     });
-
+  await notifyAdmin({
+    title: "New Booking Request",
+    message: `User booked ${booking.spaceType}`,
+    meta: { bookingId: booking._id },
+  });
     res.status(201).json({ success: true, data: booking });
   } catch (err) {
     console.error("Create Booking Error:", err);

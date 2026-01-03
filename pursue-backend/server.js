@@ -32,7 +32,7 @@ app.use("/api/admin/payments", require("./routes/admin/adminPaymentRoutes"));
 app.use("/api/admin/invoices", require("./routes/admin/adminInvoiceRoutes"));
 app.use("/api/admin/settings", require("./routes/admin/adminSettingsRoutes"));
 app.use("/api/admin/branches", require("./routes/admin/branchRoutes"));
-
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 
 // User Routes
 app.use("/api/user", require("./routes/user/userAuthRoutes"));

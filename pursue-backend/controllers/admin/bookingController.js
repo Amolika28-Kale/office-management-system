@@ -1,4 +1,5 @@
 const Booking = require("../../models/common/Booking");
+const { notifyUser } = require("../../utils/notify");
 
 /**
  * CREATE BOOKING (Admin)
@@ -74,21 +75,36 @@ exports.getBookingById = async (req, res) => {
 /**
  * UPDATE BOOKING STATUS
  */
+
 exports.updateBookingStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
+  const { status } = req.body;
 
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+  const booking = await Booking.findById(req.params.id);
 
-    res.json({ success: true, data: booking });
-  } catch (err) {
-    res.status(500).json({ message: "Update failed" });
+  booking.status = status;
+  await booking.save();
+
+  if (status === "approved") {
+    await notifyUser({
+      userId: booking.user,
+      title: "Booking Approved",
+      message: "Your booking has been approved",
+      meta: { bookingId: booking._id },
+    });
   }
+
+  if (status === "rejected") {
+    await notifyUser({
+      userId: booking.user,
+      title: "Booking Rejected",
+      message: "Your booking was rejected",
+      meta: { bookingId: booking._id },
+    });
+  }
+
+  res.json({ success: true });
 };
+
 
 
 /**
