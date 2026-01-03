@@ -1,19 +1,25 @@
 import { useEffect, useState } from "react";
-import {
-  getInvoiceById,
-  downloadInvoicePDF,
-} from "../services/invoiceService";
+import { getInvoiceById, downloadInvoicePDF } from "../services/invoiceService";
+import { X } from "lucide-react";
 
 export default function InvoicePreviewModal({ invoiceId, onClose }) {
   const [invoice, setInvoice] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (invoiceId) loadInvoice();
+    if (invoiceId) fetchInvoice();
   }, [invoiceId]);
 
-  const loadInvoice = async () => {
-    const res = await getInvoiceById(invoiceId);
-    setInvoice(res);
+  const fetchInvoice = async () => {
+    try {
+      setLoading(true);
+      const res = await getInvoiceById(invoiceId);
+      setInvoice(res);
+    } catch (err) {
+      console.error("Failed to load invoice", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -30,6 +36,7 @@ export default function InvoicePreviewModal({ invoiceId, onClose }) {
     link.remove();
   };
 
+  if (loading) return null;
   if (!invoice) return null;
 
   const amount = Number(invoice.amount || 0);
@@ -45,16 +52,21 @@ export default function InvoicePreviewModal({ invoiceId, onClose }) {
     : "-";
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
-      <div className="bg-white w-[820px] max-h-[90vh] overflow-y-auto rounded-xl p-8 shadow-xl">
+    <div className="fixed inset-0 bg-black/60 z-50 flex justify-center items-center">
+      <div className="bg-white w-[820px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl relative p-8">
+
+        {/* CLOSE BUTTON */}
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-gray-500 hover:text-black"
+        >
+          <X size={22} />
+        </button>
 
         {/* HEADER */}
-        <div className="flex justify-between items-start mb-10">
+        <div className="flex justify-between mb-10">
           <div>
             <h1 className="text-2xl font-bold mb-2">INVOICE</h1>
-             <button onClick={onClose}>
-            <X className="text-gray-500" />
-          </button>
             <p className="text-sm text-gray-600">
               Invoice #: {invoice.invoiceNumber}
             </p>
@@ -83,7 +95,7 @@ export default function InvoicePreviewModal({ invoiceId, onClose }) {
         {/* TABLE */}
         <table className="w-full text-sm mb-8 border-collapse">
           <thead>
-            <tr className="border-b bg-gray-50">
+            <tr className="bg-gray-50 border-b">
               <th className="text-left p-3">Description</th>
               <th className="text-center p-3">Period</th>
               <th className="text-right p-3">Amount</th>
@@ -143,14 +155,13 @@ export default function InvoicePreviewModal({ invoiceId, onClose }) {
         </p>
 
         {/* ACTIONS */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end">
           <button
             onClick={handleDownload}
             className="border px-6 py-2 rounded-lg hover:bg-gray-100"
           >
             Download PDF
           </button>
-
         </div>
       </div>
     </div>

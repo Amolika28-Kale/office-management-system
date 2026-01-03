@@ -31,6 +31,7 @@ app.use("/api/admin/inventory", require("./routes/admin/inventoryRoutes"));
 app.use("/api/admin/payments", require("./routes/admin/adminPaymentRoutes"));
 app.use("/api/admin/invoices", require("./routes/admin/adminInvoiceRoutes"));
 app.use("/api/admin/settings", require("./routes/admin/adminSettingsRoutes"));
+app.use("/api/admin/branches", require("./routes/admin/branchRoutes"));
 
 
 // User Routes
