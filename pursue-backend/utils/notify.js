@@ -1,21 +1,25 @@
 const Notification = require("../models/common/Notification");
 
-exports.notifyAdmin = async ({ title, message, meta }) => {
-  await Notification.create({
+/* USER NOTIFICATION */
+exports.notifyUser = async ({ userId, title, message, meta }) => {
+  return Notification.create({
+    user: userId,
     title,
     message,
-    admin: null, // means all admins
     type: "booking",
     meta,
+    isRead: false,
   });
 };
 
-exports.notifyUser = async ({ userId, title, message, meta }) => {
-  await Notification.create({
+/* ADMIN NOTIFICATION */
+exports.notifyAdmin = async ({ title, message, meta }) => {
+  return Notification.create({
+    admin: null, // or adminId if multi-admin
     title,
     message,
-    user: userId,
     type: "booking",
     meta,
+    isRead: false,
   });
 };

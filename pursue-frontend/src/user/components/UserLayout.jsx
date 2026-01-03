@@ -2,10 +2,11 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, CalendarCheck, CreditCard, FileText, 
-  Settings, LogOut, Menu, X, Bell, UserCircle, 
+  Settings, LogOut, Menu, X, UserCircle, 
   ChevronRight, Compass, ShieldCheck
 } from "lucide-react";
 import { logout } from "../../services/authService";
+import UserNotificationBell from "./UserNotificationBell";
 
 export default function UserLayout() {
   const navigate = useNavigate();
@@ -139,10 +140,8 @@ export default function UserLayout() {
 
           <div className="flex items-center gap-2 sm:gap-4">
             {/* NOTIFICATIONS */}
-            <button className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl relative transition-all">
-              <Bell size={20} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-indigo-600 rounded-full border-2 border-white shadow-sm" />
-            </button>
+            <UserNotificationBell />
+
 
             <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
 

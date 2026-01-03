@@ -77,34 +77,41 @@ exports.getBookingById = async (req, res) => {
  */
 
 exports.updateBookingStatus = async (req, res) => {
-  const { status } = req.body;
+  try {
+    const { status } = req.body;
 
-  const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id);
+    if (!booking)
+      return res.status(404).json({ message: "Booking not found" });
 
-  booking.status = status;
-  await booking.save();
+    booking.status = status;
+    await booking.save();
 
-  if (status === "approved") {
-    await notifyUser({
-      userId: booking.user,
-      title: "Booking Approved",
-      message: "Your booking has been approved",
-      meta: { bookingId: booking._id },
-    });
+    // USER NOTIFICATION
+    if (status === "approved") {
+      await notifyUser({
+        userId: booking.userId,   // ✅ FIX
+        title: "Booking Approved",
+        message: "Your booking has been approved",
+        meta: { bookingId: booking._id },
+      });
+    }
+
+    if (status === "rejected") {
+      await notifyUser({
+        userId: booking.userId,   // ✅ FIX
+        title: "Booking Rejected",
+        message: "Your booking was rejected",
+        meta: { bookingId: booking._id },
+      });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Update Booking Status Error:", err);
+    res.status(500).json({ message: "Status update failed" });
   }
-
-  if (status === "rejected") {
-    await notifyUser({
-      userId: booking.user,
-      title: "Booking Rejected",
-      message: "Your booking was rejected",
-      meta: { bookingId: booking._id },
-    });
-  }
-
-  res.json({ success: true });
 };
-
 
 
 /**

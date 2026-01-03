@@ -102,24 +102,28 @@ exports.createBooking = async (req, res) => {
     /* =========================
        CREATE BOOKING
     ========================= */
-    const booking = await Booking.create({
-      userId: user._id,
-      userName: user.name,
-      userEmail: user.email,
-      spaceId: space._id,
-      fromDate: start,
-      toDate: end,
-      planType,
-      totalAmount,
-      notes,
-      status: "pending",
-    });
-  await notifyAdmin({
-    title: "New Booking Request",
-    message: `User booked ${booking.spaceType}`,
-    meta: { bookingId: booking._id },
-  });
-    res.status(201).json({ success: true, data: booking });
+const booking = await Booking.create({
+  userId: user._id,
+  userName: user.name,
+  userEmail: user.email,
+  spaceId: space._id,
+  fromDate: start,
+  toDate: end,
+  planType,
+  totalAmount,
+  notes,
+  status: "pending",
+});
+
+/* ADMIN NOTIFICATION */
+await notifyAdmin({
+  title: "New Booking Request",
+  message: `${user.name} booked ${space.name}`,  // ✅ FIX
+  meta: { bookingId: booking._id },
+});
+
+res.status(201).json({ success: true, data: booking });
+
   } catch (err) {
     console.error("Create Booking Error:", err);
     res.status(500).json({ message: "Booking failed" });

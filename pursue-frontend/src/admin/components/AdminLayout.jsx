@@ -3,8 +3,9 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, CalendarCheck, Users, Boxes,
   CreditCard, FileText, Settings, LogOut,
-  Building2, Menu, X, Search, Bell, UserCircle, ChevronRight
+  Building2, Menu, X, Search, UserCircle, ChevronRight
 } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -195,10 +196,11 @@ export default function AdminLayout() {
             )}
           </div>
 
-          <div className="ml-auto flex items-center gap-4">
-            <Bell size={20} />
-            <UserCircle size={32} />
-          </div>
+         <div className="ml-auto flex items-center gap-4">
+  <NotificationBell />
+  <UserCircle size={32} />
+</div>
+
         </header>
 
         <main className="flex-1 p-6 md:p-10">
